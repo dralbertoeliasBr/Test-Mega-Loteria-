@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MEGA LAB 0.4</title>
+<style>
+:root{--bg:#0f1720;--card:#17212d;--line:#26364a;--tx:#e8eef5;--mut:#93a4b8;--ok:#3ecf8e;--warn:#f5b947;--bad:#ef6b6b;--ac:#4aa3ff}
+*{box-sizing:border-box;min-width:0}body{margin:0;font:15px/1.45 -apple-system,system-ui,sans-serif;background:var(--bg);color:var(--tx);padding:env(safe-area-inset-top) 0 40px}
+header{padding:14px 16px;border-bottom:1px solid var(--line)}h1{margin:0;font-size:20px}header p{margin:2px 0 0;color:var(--mut);font-size:13px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+nav button{flex:0 0 auto;background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:18px;padding:8px 12px;font-size:14px}
+nav button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+main{padding:12px}section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 8px}.card h3{font-size:14px;margin:12px 0 4px}.mut{color:var(--mut);font-size:13px}
+button.b{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-size:15px;margin:4px 4px 4px 0;min-height:44px}
+button.s{background:#2a3b50}textarea,input,select{width:100%;background:#0b121a;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:9px;font-size:16px;margin-bottom:6px}
+textarea{min-height:90px}label{font-size:13px;color:var(--mut)}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.n{background:#0b121a;border:1px solid var(--line);border-radius:8px;padding:6px 2px;text-align:center;font-size:11px}
+.n b{display:block;font-size:16px}.hot{border-color:var(--warn)}.cold{border-color:#5b6b80}
+.g10{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;margin:6px 0}.g10 div{text-align:center;font-size:11px;padding:5px 0;border-radius:5px;background:#0b121a}
+.ball{display:inline-block;min-width:30px;padding:4px 0;margin:2px;border-radius:15px;background:var(--ac);color:#fff;text-align:center;font-weight:600}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.truth{border-left:4px solid var(--warn)}.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<header><h1>MEGA LAB 0.4</h1><p>Laboratório de estatística e probabilidade da Mega-Sena · educação, não previsão</p></header>
+<nav id="nav"></nav>
+<main>
+<section id="s-base">
+ <div class="card"><h2>Base histórica</h2><div id="baseInfo" class="mut">Base não carregada.</div></div>
+ <div class="card"><h2>1. Carregar online (tentativa)</h2>
+  <p class="mut">Tenta a API pública da Caixa. O navegador pode bloquear. Se falhar, use a opção 2.</p>
+  <button class="b" id="btnOnline">Carregar histórico online</button><div id="onlineMsg" class="mut"></div></div>
+ <div class="card"><h2>2. Importar CSV ou colar texto</h2>
+  <p class="mut">Uma linha por concurso: número, data (opcional) e as 6 dezenas. Ex.: <code>2800;20/11/2026;04;15;23;34;47;58</code>. Concursos já existentes são ignorados; se vier um concurso igual com dezenas diferentes, a divergência é registrada e o original é mantido.</p>
+  <label>Fonte (ex.: planilha Caixa baixada em 26/11)</label><input id="csvSrc">
+  <input type="file" id="csvFile" accept=".csv,.txt,text/*"><textarea id="csvText" placeholder="ou cole aqui"></textarea>
+  <button class="b" id="btnImport">Importar</button><div id="importMsg" class="mut"></div></div>
+ <div class="card"><h2>3. Backup</h2>
+  <button class="b" id="btnExport">Exportar backup (JSON)</button><button class="b s" id="btnCsvOut">Exportar base (CSV)</button>
+  <p class="mut">Se o download não abrir no iPhone, o conteúdo aparece na caixa abaixo para copiar. Para restaurar, cole o JSON e toque em Restaurar.</p><textarea id="bkText"></textarea><button class="b s" id="btnRestore">Restaurar backup</button><div id="bkMsg" class="mut"></div></div>
+ <div class="card"><h2>Registro de importações</h2><div id="logOut" class="mut"></div></div>
+</section>
+
+<section id="s-cards"><div class="card"><h2>60 cards</h2><p class="mut">Vezes sorteada · desvio do esperado · atraso. Toque numa dezena para a ficha completa.</p><div class="grid" id="cards"></div></div><div class="card" id="cardDet" style="display:none"></div></section>
+
+<section id="s-dist">
+ <div class="card"><h2>Distribuições: real × acaso</h2><p class="mut">Cada estudo compara a base com o modelo de sorteio uniforme (conta exata ou 100.000 sorteios simulados, semente fixa). O teste qui-quadrado diz se a diferença é maior do que o acaso costuma produzir.</p>
+ <select id="dSel"></select><div id="dOut"></div></div>
+ <div class="card"><h2>Comparar períodos</h2><p class="mut">10 mais sorteadas: 1ª metade × 2ª metade da base.</p><div id="tPer"></div></div>
+</section>
+
+<section id="s-geo"><div class="card"><h2>Geometrias (definições congeladas)</h2>
+ <select id="gSel"></select><div id="gMap"></div><div id="gDef" class="mut"></div><div id="gOut"></div></div></section>
+
+<section id="s-ass">
+ <div class="card"><h2>Buscar associação</h2><p class="mut">Digite 2, 3 ou 4 dezenas (par, trio ou quadra, calculada sob demanda).</p>
+  <input id="aIn" placeholder="ex.: 11 24 35"><button class="b" id="btnAss">Buscar</button><div id="aOut"></div></div>
+ <div class="card"><h2>Pares mais frequentes</h2><div id="tPairs"></div></div>
+ <div class="card"><h2>Trios mais frequentes</h2><div id="tTrios"></div></div>
+</section>
+
+<section id="s-reg"><div class="card"><h2>Linha do tempo e regimes</h2>
+ <p class="mut">Registre um marco (mudança documentada, com fonte). O app compara antes × depois. Diferença entre períodos não prova manipulação.</p>
+ <label>Concurso de início do novo período</label><input id="rC" type="number">
+ <label>Descrição e fonte</label><input id="rDesc">
+ <label>Categoria</label><select id="rCat"><option>Mudança documentada</option><option>Mudança política/administrativa</option><option>Anomalia estatística</option><option>Hipótese de interferência</option></select>
+ <button class="b" id="btnReg">Registrar marco</button><div id="regList"></div><div id="regOut"></div></div></section>
+
+<section id="s-hip">
+ <div class="card"><h2>Motor de hipóteses + contraprova</h2>
+ <p class="mut">Critério definido ANTES: o método só passa se superar o aleatório com folga (z acima do limite), usando apenas concursos anteriores a cada sorteio testado. O limite sobe a cada novo estudo na mesma base (correção de Bonferroni), porque testar muitas ideias produz "achados" por acaso. Com poucos dados, o motor não decide.</p>
+ <label>Hipótese</label><select id="hSel">
+  <option value="freq">As 6 mais frequentes (janela recente) acertam mais</option>
+  <option value="late">As 6 mais atrasadas acertam mais</option>
+  <option value="cold">As 6 menos frequentes acertam mais</option>
+  <option value="pairs">As dezenas dos pares mais frequentes acertam mais</option>
+  <option value="repeat">Repetir as 6 do concurso anterior acerta mais</option>
+ </select>
+ <label>Janela de frequência (concursos)</label><input id="hWin" type="number" value="100">
+ <label>Concursos testados (os mais recentes)</label><input id="hN" type="number" value="300">
+ <button class="b" id="btnHip">Rodar experimento</button><div id="hipOut"></div></div>
+ <div class="card"><h2>Catálogo de estudos</h2><p class="mut">Todos ficam guardados, inclusive os negativos. Status: refutado, inconclusivo, candidato (passou uma vez, precisa replicar em concursos novos) ou replicado.</p><div id="catalog" class="scroll"></div></div>
+</section>
+
+<section id="s-ger"><div class="card"><h2>Gerador de cartelas</h2>
+ <label>Modo</label><select id="gMode"><option value="livre">Livre (aleatório uniforme)</option><option value="div">Diversificado (pouca repetição entre cartelas)</option></select>
+ <label>Quantidade de cartelas</label><input id="gQt" type="number" value="3" min="1" max="20">
+ <label>Máximo de dezenas em comum entre cartelas (modo diversificado)</label><input id="gOv" type="number" value="1">
+ <label>Dezenas fixas</label><input id="gFix" placeholder="ex.: 7 33">
+ <label>Excluir dezenas</label><input id="gExc" placeholder="ex.: 1 2 3">
+ <label><input type="checkbox" id="gCommon" style="width:auto"> Evitar padrões que muita gente joga (sequência de 3, tudo até 31)</label>
+ <button class="b" id="btnGen">Gerar</button><div id="genOut"></div></div></section>
+
+<section id="s-jog"><div class="card"><h2>Jogão do Chorão · humano × IA</h2>
+ <p class="mut">Registre ANTES do sorteio; a rodada não pode ser alterada. 2+4: você 2, IA 4. 4+2: você 4, IA 2. A IA também joga uma aposta própria de 6.</p>
+ <label>Modo</label><select id="jMode"><option value="2">2+4</option><option value="4">4+2</option></select>
+ <label>Método da IA</label><select id="jIA"><option value="livre">Livre (aleatório)</option><option value="est">Estatístico (mais frequentes nos últimos 100)</option><option value="mista">Misto (metade de cada)</option></select>
+ <label>Suas dezenas</label><input id="jMine" placeholder="ex.: 10 44">
+ <label>Concurso alvo</label><input id="jTarget" type="number">
+ <button class="b" id="btnJog">Registrar rodada</button><div id="jMsg" class="mut"></div></div>
+ <div class="card"><h2>Placar histórico</h2><div id="jScore" class="scroll"></div></div>
+ <div class="card"><h2>Partida simulada (sem aposta)</h2><p class="mut">Roda 10.000 sorteios uniformes contra o método escolhido da IA.</p><button class="b s" id="btnSim">Simular</button><div id="simOut"></div></div></section>
+
+<section id="s-edu">
+ <div class="card"><h2>Modo falácia: o número atrasado</h2><p class="mut">Na base real: quando uma dezena está atrasada há pelo menos K concursos, com que frequência ela sai no concurso seguinte? Se o atraso "puxasse" a dezena, passaria de 10%.</p>
+ <label>K (atraso mínimo)</label><input id="eK" type="number" value="20"><button class="b" id="btnFal">Calcular</button><div id="falOut"></div></div>
+ <div class="card truth"><h2>A verdade que o laboratório mostra</h2>
+ <p>Cada sorteio é independente. Nenhuma frequência, atraso, geometria ou fórmula aumenta a chance de acerto. Padrões "comuns" saem mais porque existem mais combinações com eles.</p>
+ <table><tr><th>Evento</th><th>Chance</th></tr><tr><td>Uma dezena específica sair</td><td>10%</td></tr><tr><td>Duas específicas juntas</td><td>0,8475%</td></tr><tr><td>Sena (6)</td><td>1 em 50.063.860</td></tr><tr><td>Quina (5)</td><td>1 em 154.518</td></tr><tr><td>Quadra (4)</td><td>1 em 2.332</td></tr><tr><td>Média de acertos por aposta</td><td>0,60</td></tr></table>
+ <p class="mut">Jogue com responsabilidade. Este app não prevê resultados.</p></div>
+ <div class="card"><h2>Sobre</h2><p class="mut">MEGA LAB 0.4 · 26/11/2026 · conceito e projeto v1.0: Sounavy (Antonio Alberto Lopes Elias) · engenharia: Claude. Versão nova; 0.2 e 0.3 permanecem intactas. Dados ficam só neste aparelho: faça backup.</p></div>
+</section>
+</main>
+
+<script>
+"use strict";
+/* ===================== NÚCLEO (puro, testável) ===================== */
+const VERSAO="0.4";
+const C=(n,k)=>{if(k<0||k>n)return 0;let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r)};
+const TOTAL=C(60,6);
+const PRIMOS=[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59];
+const FIB=[1,2,3,5,8,13,21,34,55];
+/* grade 6x10 */
+const rowOf=x=>Math.floor((x-1)/10),colOf=x=>(x-1)%10;
+/* geometrias congeladas */
+const GEO={
+ Q4:{nome:"4 quadrantes (Q4-v1)",def:"Linhas 1-3 / 4-6 × colunas 1-5 / 6-10. 4 regiões de 15.",reg:x=>(rowOf(x)<3?0:2)+(colOf(x)<5?0:1),k:4},
+ R6:{nome:"6 regiões (R6-v1)",def:"Faixas de linhas 1-2 / 3-4 / 5-6 × colunas 1-5 / 6-10. 6 regiões de 10.",reg:x=>Math.floor(rowOf(x)/2)*2+(colOf(x)<5?0:1),k:6},
+ LIN:{nome:"6 linhas (LIN-v1)",def:"Linha da grade: 01-10, 11-20, … 51-60.",reg:rowOf,k:6},
+ COL:{nome:"10 colunas (COL-v1)",def:"Coluna da grade: final 1, 2, … 0.",reg:colOf,k:10},
+ M33:{nome:"Matriz 3×3 (M33-v1)",def:"9 faixas em ordem: 6 faixas de 7 (01-42) e 3 faixas de 6 (43-60).",reg:x=>x<=42?Math.floor((x-1)/7):6+Math.floor((x-43)/6),k:9},
+ X:{nome:"Cruz de Santo André (X-v1)",def:"Na grade 6×10, casas sobre as duas diagonais: |linha − coluna×5/9| ≤ 0,5 ou |linha − (9−coluna)×5/9| ≤ 0,5.",reg:x=>{const r=rowOf(x),c=colOf(x);return(Math.abs(r-c*5/9)<=0.5||Math.abs(r-(9-c)*5/9)<=0.5)?1:0},k:2}
+};
+function parseLines(txt){const out=[],bad=[];txt.split(/\r?\n/).forEach((ln,i)=>{const s=ln.trim();if(!s)return;
+ const dm=s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);const data=dm?dm[0]:"";const rest=dm?s.replace(dm[0]," "):s;
+ const t=(rest.match(/\d+/g)||[]).map(Number);if(t.length<7){if(/\d/.test(s)&&i>0)bad.push(i+1);return}
+ const conc=t[0],d=t.slice(1,7);const okD=d.every(x=>x>=1&&x<=60)&&new Set(d).size===6;
+ if(!okD||conc<1){bad.push(i+1);return}out.push({c:conc,d:data,n:d.slice().sort((a,b)=>a-b)})});return{rows:out,bad}}
+function merge(base,rows,src="",when=""){const m=new Map(base.map(r=>[r.c,r]));let add=0;const conflicts=[];
+ rows.forEach(r=>{const o=m.get(r.c);if(!o){m.set(r.c,Object.assign({},r,{f:src,cap:when}));add++}else if(o.n.join()!==r.n.join())conflicts.push(r.c)});
+ return{base:[...m.values()].sort((a,b)=>a.c-b.c),add,conflicts}}
+function gaps(base){const g=[];for(let i=1;i<base.length;i++)for(let c=base[i-1].c+1;c<base[i].c&&g.length<50;c++)g.push(c);return g}
+function fnv(str){let h=0x811c9dc5;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,"0")}
+const baseHash=base=>fnv(base.map(r=>r.c+":"+r.n.join(",")).join("|"));
+function freq(base,from=0,to=base.length){const f=Array(61).fill(0);for(let i=Math.max(0,from);i<to;i++)base[i].n.forEach(x=>f[x]++);return f}
+function atraso(base,to=base.length){const a=Array(61).fill(to);for(let i=to-1;i>=0;i--)base[i].n.forEach(x=>{if(a[x]===to)a[x]=to-1-i});return a}
+function intervals(base,x){const idx=[];base.forEach((r,i)=>{if(r.n.includes(x))idx.push(i)});const g=[];for(let i=1;i<idx.length;i++)g.push(idx[i]-idx[i-1]);
+ const s=g.slice().sort((a,b)=>a-b);return{n:g.length,mean:g.length?g.reduce((a,b)=>a+b,0)/g.length:0,median:s.length?s[Math.floor(s.length/2)]:0,max:s.length?s[s.length-1]:0}}
+function rng(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+function pickRandom(r,k=6,fixed=[],exc=[]){const pool=[];for(let i=1;i<=60;i++)if(!fixed.includes(i)&&!exc.includes(i))pool.push(i);
+ const out=fixed.slice(0,k);while(out.length<k&&pool.length){out.push(pool.splice(Math.floor(r()*pool.length),1)[0])}return out.sort((a,b)=>a-b)}
+function topK(score,k,desc=true,excl=[]){const idx=[];for(let i=1;i<=60;i++)if(!excl.includes(i))idx.push(i);idx.sort((a,b)=>desc?(score[b]-score[a]||a-b):(score[a]-score[b]||a-b));return idx.slice(0,k).sort((a,b)=>a-b)}
+const hits=(a,b)=>a.filter(x=>b.includes(x)).length;
+/* características por concurso (prev = concurso anterior ou null) */
+const FEAT={
+ par:{nome:"Pares no sorteio",f:n=>n.filter(x=>x%2===0).length,exact:k=>C(30,k)*C(30,6-k)/TOTAL},
+ primo:{nome:"Primos no sorteio (17 primos até 60)",f:n=>n.filter(x=>PRIMOS.includes(x)).length,exact:k=>C(17,k)*C(43,6-k)/TOTAL},
+ fib:{nome:"Fibonacci no sorteio (1,2,3,5,8,13,21,34,55)",f:n=>n.filter(x=>FIB.includes(x)).length,exact:k=>C(9,k)*C(51,6-k)/TOTAL},
+ cons:{nome:"Pares de consecutivos (ex.: 14-15)",f:n=>n.filter((x,i)=>i>0&&x===n[i-1]+1).length},
+ rep:{nome:"Repetidas do concurso anterior",f:(n,p)=>p?hits(n,p):null,exact:k=>C(6,k)*C(54,6-k)/TOTAL},
+ soma:{nome:"Soma das 6 (faixas de 20)",f:n=>Math.floor(n.reduce((a,b)=>a+b,0)/20)*20,lab:k=>k+"–"+(+k+19)},
+ amp:{nome:"Amplitude: maior − menor (faixas de 5)",f:n=>Math.floor((n[5]-n[0])/5)*5,lab:k=>k+"–"+(+k+4)},
+ lin:{nome:"Linhas ocupadas (de 6)",f:n=>new Set(n.map(rowOf)).size},
+ col:{nome:"Colunas ocupadas (de 10)",f:n=>new Set(n.map(colOf)).size},
+ q4:{nome:"Padrão nos 4 quadrantes",f:n=>pattern(n,"Q4")},
+ r6:{nome:"Padrão nas 6 regiões",f:n=>pattern(n,"R6")},
+ x:{nome:"Dezenas na Cruz de Santo André",f:n=>n.filter(x=>GEO.X.reg(x)).length},
+ m33:{nome:"Faixas ocupadas da matriz 3×3 (de 9)",f:n=>new Set(n.map(GEO.M33.reg)).size}
+};
+function pattern(n,g){const k=GEO[g].k,q=Array(k).fill(0);n.forEach(x=>q[GEO[g].reg(x)]++);return q.sort((a,b)=>b-a).join("-")}
+const MC=new Map();
+function monteCarlo(key,N=100000,seed=1105){const ck=key+N+seed;if(MC.has(ck))return MC.get(ck);const r=rng(seed),F=FEAT[key],h={};let prev=pickRandom(r);
+ for(let i=0;i<N;i++){const n=pickRandom(r);const v=F.f(n,prev);if(v!==null)h[v]=(h[v]||0)+1;prev=n}
+ const tot=Object.values(h).reduce((a,b)=>a+b,0);const p={};for(const k in h)p[k]=h[k]/tot;MC.set(ck,p);return p}
+function expected(key){const F=FEAT[key];if(F.exact){const p={};for(let k=0;k<=6;k++){const v=F.exact(k);if(v>0)p[k]=v}return{p,how:"conta exata"}}return{p:monteCarlo(key),how:"100.000 sorteios simulados"}}
+function observed(base,key){const F=FEAT[key],h={};let n=0;base.forEach((r,i)=>{const v=F.f(r.n,i>0?base[i-1].n:null);if(v!==null){h[v]=(h[v]||0)+1;n++}});return{h,n}}
+/* qui-quadrado com agrupamento de caselas de esperado < 5 */
+function chiSquare(obsH,n,p){const keys=Object.keys(p).sort((a,b)=>p[b]-p[a]);let bins=[],ro=0,re=0;
+ keys.forEach(k=>{const e=p[k]*n,o=obsH[k]||0;if(e>=5)bins.push([o,e]);else{ro+=o;re+=e}});Object.keys(obsH).forEach(k=>{if(!(k in p))ro+=obsH[k]});
+ if(re>0){if(re>=5||!bins.length)bins.push([ro,re]);else{const l=bins[bins.length-1];l[0]+=ro;l[1]+=re}}let chi=0;bins.forEach(([o,e])=>{if(e>0)chi+=(o-e)*(o-e)/e});const df=Math.max(1,bins.length-1);return{chi,df,p:chiP(chi,df)}}
+function chiP(x,k){if(x<=0)return 1;const z=(Math.pow(x/k,1/3)-(1-2/(9*k)))/Math.sqrt(2/(9*k));return 1-normCdf(z)}
+function normCdf(z){const t=1/(1+0.2316419*Math.abs(z)),d=0.3989423*Math.exp(-z*z/2);const p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p}
+function normInv(p){/* Acklam */const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239],b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+ const q=Math.min(p,1-p);let x;if(q<0.02425){const u=Math.sqrt(-2*Math.log(q));x=(((((c[0]*u+c[1])*u+c[2])*u+c[3])*u+c[4])*u+c[5])/((((d[0]*u+d[1])*u+d[2])*u+d[3])*u+1)}else{const u=q-0.5,r=u*u;x=(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*u/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1)}return p<0.5?x:-x}
+/* associações */
+function combos(n,k,start=0,acc=[],out=[]){if(acc.length===k){out.push(acc.join("-"));return out}for(let i=start;i<n.length;i++){acc.push(n[i]);combos(n,k,i+1,acc,out);acc.pop()}return out}
+function topAssoc(base,k,top=10){const m=new Map();base.forEach(r=>combos(r.n,k).forEach(key=>m.set(key,(m.get(key)||0)+1)));
+ const pr=C(54+(6-k)-(6-k),0);const exp=base.length*C(60-k,6-k)/TOTAL;return{list:[...m.entries()].sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1)).slice(0,top),exp,universe:C(60,k)}}
+function assocLookup(base,set){const s=set.slice().sort((a,b)=>a-b);const conc=base.filter(r=>s.every(x=>r.n.includes(x))).map(r=>r.c);const p=C(60-s.length,6-s.length)/TOTAL;
+ const exp=base.length*p,sd=Math.sqrt(base.length*p*(1-p));return{count:conc.length,conc,exp,p,z:sd>0?(conc.length-exp)/sd:0}}
+/* hipóteses */
+function pickFor(base,t,hyp,win){if(hyp==="late")return topK(atraso(base,t),6,true);if(hyp==="repeat")return base[t-1].n.slice();
+ if(hyp==="pairs"){const m=new Map();for(let i=Math.max(0,t-win);i<t;i++)combos(base[i].n,2).forEach(k=>m.set(k,(m.get(k)||0)+1));const out=[];
+  [...m.entries()].sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1)).some(([k])=>{k.split("-").map(Number).forEach(x=>{if(out.length<6&&!out.includes(x))out.push(x)});return out.length>=6});return out.sort((a,b)=>a-b)}
+ const f=freq(base,t-win,t);return topK(f,6,hyp==="freq")}
+function experiment(base,hyp,win,N,nPrior=0,seed=20261126){const L=base.length;N=Math.min(N,L-win);const zc=normInv(1-0.025/(nPrior+1));
+ if(N<30)return{decision:"INCONCLUSIVO",N:0,zc,reason:"Poucos concursos para testar (mínimo 30 após a janela). O motor não decide."};
+ const r=rng(seed);let hm=[],hr=[];for(let t=L-N;t<L;t++){hm.push(hits(pickFor(base,t,hyp,win),base[t].n));hr.push(hits(pickRandom(r),base[t].n))}
+ const mean=a=>a.reduce((x,y)=>x+y,0)/a.length,mm=mean(hm),mr=mean(hr);const v=a=>{const m=mean(a);return a.reduce((x,y)=>x+(y-m)*(y-m),0)/(a.length-1)};
+ const se=Math.sqrt(v(hm)/N+v(hr)/N),z=se>0?(mm-mr)/se:0;const pass=z>zc;
+ return{decision:pass?"CANDIDATO":"REFUTADO",N,win,mm,mr,z,zc,reason:pass?"Superou o aleatório acima do limite corrigido. Ainda não é prova: precisa replicar em concursos que entrarem depois.":"Não superou o aleatório. Resultado negativo registrado."}}
+/* regimes: homogeneidade de frequências antes x depois (qui-quadrado 2x60) */
+function regimeCompare(base,c0){const i=base.findIndex(r=>r.c>=c0);if(i<30||base.length-i<30)return null;const fa=freq(base,0,i),fb=freq(base,i),na=i*6,nb=(base.length-i)*6;let chi=0;
+ for(let x=1;x<=60;x++){const t=fa[x]+fb[x],ea=t*na/(na+nb),eb=t*nb/(na+nb);if(ea>0)chi+=(fa[x]-ea)**2/ea;if(eb>0)chi+=(fb[x]-eb)**2/eb}
+ const sa=base.slice(0,i).reduce((s,r)=>s+r.n.reduce((a,b)=>a+b,0),0)/i,sb=base.slice(i).reduce((s,r)=>s+r.n.reduce((a,b)=>a+b,0),0)/(base.length-i);
+ return{antes:i,depois:base.length-i,chi,df:59,p:chiP(chi,59),somaA:sa,somaB:sb}}
+/* falácia do atrasado */
+function lateFallacy(base,K){let cases=0,hit=0;for(let t=K;t<base.length;t++){const a=atraso(base,t);for(let x=1;x<=60;x++)if(a[x]>=K){cases++;if(base[t].n.includes(x))hit++}}return{cases,hit,rate:cases?hit/cases:0}}
+/* gerador */
+function avoidPopular(n){const seq=n.some((x,i)=>i>1&&x===n[i-1]+1&&n[i-1]===n[i-2]+1);return !seq&&n.some(x=>x>31)}
+function generate(r,{qt=1,mode="livre",maxOv=1,fixed=[],exc=[],common=false}){const out=[],disc={popular:0,sobreposicao:0};let tries=0;
+ while(out.length<qt&&tries<20000){tries++;const g=pickRandom(r,6,fixed,exc);if(common&&!avoidPopular(g)){disc.popular++;continue}
+  if(mode==="div"&&out.some(o=>hits(o,g)>Math.max(maxOv,fixed.length))){disc.sobreposicao++;continue}out.push(g)}return{cards:out,disc,tries}}
+function iaPick(base,method,k,exclude,r){const f=freq(base,base.length-100,base.length);const est=topK(f,60,true).filter(x=>!exclude.includes(x));
+ const sorted=[];for(let i=1;i<=60;i++)if(!exclude.includes(i))sorted.push(i);sorted.sort((a,b)=>f[b]-f[a]||a-b);
+ if(method==="est")return sorted.slice(0,k);if(method==="mista"){const h=Math.ceil(k/2),a=sorted.slice(0,h);return a.concat(pickRandom(r,k-h,[],exclude.concat(a)).slice(0,k-h))}
+ return pickRandom(r,k,[],exclude)}
+function simulateIA(base,method,N=10000,seed=77){const r=rng(seed);let tot=0;const ia=base.length>=100?iaPick(base,method,6,[],r):pickRandom(r);for(let i=0;i<N;i++)tot+=hits(ia,pickRandom(r));return{ia,mean:tot/N}}
+if(typeof module!=="undefined")module.exports={C,TOTAL,PRIMOS,FIB,GEO,FEAT,parseLines,merge,gaps,baseHash,freq,atraso,intervals,rng,pickRandom,topK,hits,pattern,monteCarlo,expected,observed,chiSquare,chiP,normInv,combos,topAssoc,assocLookup,pickFor,experiment,regimeCompare,lateFallacy,generate,avoidPopular,iaPick,simulateIA};
+
+/* ===================== INTERFACE ===================== */
+if(typeof document!=="undefined"){
+const KEY="megalab04";let S={base:[],studies:[],rounds:[],marks:[],log:[]};let MEM=null;
+function load(){try{let j=localStorage.getItem(KEY);if(!j){const old=localStorage.getItem("megalab03");if(old){j=old}}if(j)S=Object.assign(S,JSON.parse(j))}catch(e){if(MEM)S=MEM}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){MEM=JSON.parse(JSON.stringify(S))}}
+const $=id=>document.getElementById(id);const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct=x=>(x*100).toFixed(2)+"%";const two=x=>String(x).padStart(2,"0");const balls=a=>a.map(x=>`<span class="ball">${two(x)}</span>`).join("");
+const tabs=[["base","Base"],["cards","60 cards"],["dist","Distribuições"],["geo","Geometria"],["ass","Associações"],["reg","Regimes"],["hip","Hipóteses"],["ger","Gerador"],["jog","Jogão do Chorão"],["edu","Aprender"]];
+$("nav").innerHTML=tabs.map(([k,l])=>`<button data-t="${k}">${l}</button>`).join("");
+function show(t){document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id==="s-"+t));if(t==="dist")renderDist();if(t==="geo")renderGeo()}
+$("nav").onclick=e=>{if(e.target.dataset.t)show(e.target.dataset.t)};
+function download(name,text,type){try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}catch(e){}
+ $("bkText").value=text;$("bkMsg").textContent="Se o download não abrir, o conteúdo está na caixa acima: copie e guarde."}
+const need=el=>{if(!S.base.length){$(el).innerHTML='<p class="mut">Carregue a base primeiro (aba Base).</p>';return true}return false};
+function render(){const B=S.base,L=B.length;const g=gaps(B);
+ $("baseInfo").innerHTML=L?`<b>${L}</b> concursos · do ${B[0].c} ao ${B[L-1].c} · impressão da base <code>${baseHash(B)}</code><br>último: ${balls(B[L-1].n)}`+(g.length?`<br><span class="warn">Lacunas: faltam ${g.length>=50?"50+":g.length} concursos (ex.: ${g.slice(0,8).join(", ")})</span>`:`<br><span class="ok">Sem lacunas na sequência.</span>`):"Base não carregada.";
+ $("logOut").innerHTML=S.log.length?S.log.slice(0,20).map(l=>esc(l)).join("<br>"):"Nenhuma importação ainda.";
+ checkRounds();renderCatalog();renderScore();renderMarks();
+ if(need("cards")){["tPer","tPairs","tTrios"].forEach(need);return}
+ const f=freq(B),a=atraso(B),exp=L*0.1;
+ $("cards").innerHTML=Array.from({length:60},(_,i)=>i+1).map(x=>{const dv=(f[x]-exp)/exp;return`<div class="n ${dv>0.05?"hot":dv<-0.05?"cold":""}" data-n="${x}"><b>${two(x)}</b>${f[x]}× · ${dv>=0?"+":""}${(dv*100).toFixed(0)}%<br>atraso ${a[x]}</div>`}).join("");
+ const h=Math.floor(L/2),f1=freq(B,0,h),f2=freq(B,h,L),top=topK(f,10,true);
+ $("tPer").innerHTML="<table><tr><th>Dezena</th><th>1ª metade</th><th>2ª metade</th></tr>"+top.map(x=>`<tr><td>${two(x)}</td><td>${f1[x]}</td><td>${f2[x]}</td></tr>`).join("")+"</table>";
+ const tp=topAssoc(B,2),tt=topAssoc(B,3);
+ $("tPairs").innerHTML=`<p class="mut">${tp.universe.toLocaleString("pt-BR")} pares possíveis · esperado por par: ${tp.exp.toFixed(1)}</p><table><tr><th>Par</th><th>Vezes</th><th>÷ esperado</th></tr>`+tp.list.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td><td>${(v/tp.exp).toFixed(2)}</td></tr>`).join("")+"</table>";
+ $("tTrios").innerHTML=`<p class="mut">${tt.universe.toLocaleString("pt-BR")} trios possíveis · esperado por trio: ${tt.exp.toFixed(2)}. Entre tantos, alguns saem bem acima do esperado só por acaso.</p><table><tr><th>Trio</th><th>Vezes</th></tr>`+tt.list.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("")+"</table>";
+ if(!$("jTarget").value&&L)$("jTarget").value=B[L-1].c+1;if(!$("rC").value&&L)$("rC").value=B[Math.floor(L/2)].c}
+/* card */
+$("cards").onclick=e=>{const el=e.target.closest(".n");if(!el)return;const x=+el.dataset.n,B=S.base,L=B.length,f=freq(B),a=atraso(B),it=intervals(B,x);
+ const win=[10,20,50,100].map(w=>`${w}: ${freq(B,L-w,L)[x]} (esp. ${(Math.min(w,L)*0.1).toFixed(1)})`).join(" · ");
+ const rank=topK(f,60,true).sort((p,q)=>f[q]-f[p]||p-q).indexOf(x)+1;const z=(f[x]-L*0.1)/Math.sqrt(L*0.1*0.9);
+ const comp=Array(61).fill(0);B.forEach(r=>{if(r.n.includes(x))r.n.forEach(y=>{if(y!==x)comp[y]++})});const best=topK(comp,5,true,[x]).sort((p,q)=>comp[q]-comp[p]);
+ const tri=new Map();B.forEach(r=>{if(r.n.includes(x))combos(r.n.filter(y=>y!==x),2).forEach(k=>tri.set(k,(tri.get(k)||0)+1))});const t3=[...tri.entries()].sort((p,q)=>q[1]-p[1]).slice(0,3);
+ const last=[];for(let i=L-1;i>=0&&last.length<5;i--)if(B[i].n.includes(x))last.push(B[i].c);
+ const interp=Math.abs(z)<2?"A diferença para o esperado está dentro do que o acaso costuma produzir.":"A diferença é grande para uma dezena isolada, mas entre 60 dezenas é normal que algumas cheguem a isso por acaso. Não indica tendência.";
+ $("cardDet").style.display="block";$("cardDet").innerHTML=`<h2>Ficha da dezena ${two(x)}</h2><p class="mut">Base de ${L} concursos · atualizada ${new Date().toLocaleDateString("pt-BR")}</p>
+ <h3>Frequência total</h3><p>${f[x]} vezes (${pct(f[x]/L)}) · esperado ${(L*0.1).toFixed(1)} (10%) · posição ${rank}º · z = ${z.toFixed(2)}</p>
+ <h3>Janelas recentes</h3><p>${win}</p>
+ <h3>Atraso</h3><p>Atual ${a[x]} · intervalo médio ${it.mean.toFixed(1)} · mediana ${it.median} · maior ${it.max} (o esperado é cerca de 10)</p>
+ <h3>Associações</h3><p>Mais saiu com: ${best.map(y=>`${two(y)} (${comp[y]}×)`).join(", ")}<br>Trios com ela: ${t3.map(([k,v])=>`${x}-${k} (${v}×)`).join(", ")||"—"}<br><span class="mut">Esperado por par: ${(L*30/3540).toFixed(1)}. Coocorrência não quer dizer que uma dezena chama a outra.</span></p>
+ <h3>Geometria</h3><p>Linha ${rowOf(x)+1} · coluna ${colOf(x)+1} · quadrante ${GEO.Q4.reg(x)+1} · região ${GEO.R6.reg(x)+1} de 6 · faixa ${GEO.M33.reg(x)+1} da matriz 3×3 · ${GEO.X.reg(x)?"na":"fora da"} Cruz de Santo André · ${x%2?"ímpar":"par"}${PRIMOS.includes(x)?" · primo":""}${FIB.includes(x)?" · Fibonacci":""}</p>
+ <h3>Últimos concursos</h3><p>${last.join(", ")||"nenhum"}</p><h3>Leitura</h3><p>${interp}</p>`;$("cardDet").scrollIntoView({behavior:"smooth"})};
+/* distribuições */
+$("dSel").innerHTML=Object.entries(FEAT).map(([k,v])=>`<option value="${k}">${v.nome}</option>`).join("");$("dSel").onchange=renderDist;
+function renderDist(){if(need("dOut"))return;const key=$("dSel").value,F=FEAT[key];const{h,n}=observed(S.base,key);const{p,how}=expected(key);const cs=chiSquare(h,n,p);
+ const keys=[...new Set(Object.keys(p).concat(Object.keys(h)))].sort((a,b)=>isNaN(a)?(p[b]||0)-(p[a]||0):a-b).filter(k=>(p[k]||0)>=0.0005||h[k]);
+ const lab=k=>F.lab?F.lab(k):k;const verdict=cs.p<0.01?`<span class="warn">Diferença maior que o acaso costuma dar (p = ${cs.p.toFixed(4)}). Antes de concluir algo: conferir a base, a quantidade de estudos já feitos e replicar em concursos novos.</span>`:`<span class="ok">Compatível com o acaso (p = ${cs.p.toFixed(3)}).</span>`;
+ $("dOut").innerHTML=`<p class="mut">Modelo: ${how} · ${n} concursos · qui-quadrado ${cs.chi.toFixed(1)} com ${cs.df} graus de liberdade</p><p>${verdict}</p><table><tr><th>Valor</th><th>Real</th><th>Acaso</th></tr>`+keys.map(k=>`<tr><td>${lab(k)}</td><td>${pct((h[k]||0)/n)}</td><td>${pct(p[k]||0)}</td></tr>`).join("")+"</table>"}
+/* geometria */
+$("gSel").innerHTML=Object.entries(GEO).map(([k,v])=>`<option value="${k}">${v.nome}</option>`).join("");$("gSel").onchange=renderGeo;
+const PAL=["#4aa3ff","#f5b947","#3ecf8e","#ef6b6b","#b58cff","#4dd0e1","#ff8a65","#9ccc65","#f06292","#90a4ae"];
+function renderGeo(){const g=$("gSel").value,G=GEO[g];let m="";for(let x=1;x<=60;x++){const r=G.reg(x);m+=`<div style="background:${g==="X"?(r?PAL[1]:"#0b121a"):PAL[r%PAL.length]};color:${g==="X"&&!r?"#93a4b8":"#0b121a"}">${two(x)}</div>`}
+ $("gMap").innerHTML=`<div class="g10">${m}</div>`;const sizes=Array(G.k).fill(0);for(let x=1;x<=60;x++)sizes[G.reg(x)]++;
+ $("gDef").innerHTML=`Regra: ${G.def}<br>Tamanho de cada região: ${sizes.join(", ")}. A grade é uma escolha de análise, não uma propriedade física do sorteio.`;
+ if(!S.base.length){$("gOut").innerHTML="";return}const B=S.base,L=B.length,cnt=Array(G.k).fill(0);B.forEach(r=>r.n.forEach(x=>cnt[G.reg(x)]++));
+ let chi=0;$("gOut").innerHTML="<h3>Dezenas sorteadas por região</h3><table><tr><th>Região</th><th>Real</th><th>Esperado</th></tr>"+cnt.map((c,i)=>{const e=L*6*sizes[i]/60;chi+=(c-e)**2/e;return`<tr><td>${g==="X"?(i?"Na cruz":"Fora"):i+1}</td><td>${c}</td><td>${e.toFixed(0)}</td></tr>`}).join("")+"</table>"+
+ `<p class="mut">Qui-quadrado ${chi.toFixed(1)}, ${G.k-1} g.l., p ≈ ${chiP(chi,G.k-1).toFixed(3)}. Para o padrão por sorteio, veja a aba Distribuições.</p>`}
+/* associações */
+$("btnAss").onclick=()=>{if(need("aOut"))return;const s=parseNums($("aIn").value);if(s.length<2||s.length>4){$("aOut").innerHTML='<p class="bad">Digite de 2 a 4 dezenas diferentes.</p>';return}
+ const r=assocLookup(S.base,s);$("aOut").innerHTML=`<p><b>${s.map(two).join("-")}</b>: saiu junto ${r.count} vezes · esperado ${r.exp.toFixed(2)} (chance por concurso ${pct(r.p)}) · z = ${r.z.toFixed(2)}</p><p class="mut">Concursos: ${r.conc.slice(-40).join(", ")||"nenhum"}</p>`};
+function parseNums(s){return[...new Set((String(s).match(/\d+/g)||[]).map(Number).filter(x=>x>=1&&x<=60))]}
+/* base */
+function doImport(txt,src){const{rows,bad}=parseLines(txt);const when=new Date().toISOString();const m=merge(S.base,rows,src,when);S.base=m.base;
+ S.log.unshift(`${when.slice(0,16).replace("T"," ")} · ${src||"sem fonte"} · ${m.add} novos · ${rows.length-m.add-m.conflicts.length} repetidos · ${bad.length} inválidos`+(m.conflicts.length?` · DIVERGÊNCIA nos concursos ${m.conflicts.slice(0,10).join(", ")} (original mantido)`:"")+` · impressão ${baseHash(S.base)}`);save();render();
+ $("importMsg").innerHTML=`<span class="ok">${m.add} concursos novos</span> · ${rows.length-m.add} já existiam · ${bad.length} linhas inválidas${bad.length?" (linhas "+bad.slice(0,8).join(", ")+")":""}`+(m.conflicts.length?`<br><span class="warn">${m.conflicts.length} concursos vieram diferentes do que já estava na base. Mantive o original e registrei.</span>`:"")}
+$("btnImport").onclick=()=>{const f=$("csvFile").files[0],src=$("csvSrc").value.trim()||(f?f.name:"texto colado");if(f){const r=new FileReader();r.onload=()=>doImport(r.result,src);r.readAsText(f)}else doImport($("csvText").value,src)};
+$("btnOnline").onclick=async()=>{const m=$("onlineMsg");m.textContent="Tentando…";const url="https://servicebus2.caixa.gov.br/portaldeloterias/api/megasena/";
+ try{const j=await(await fetch(url)).json();const rows=[];const add=o=>rows.push({c:o.numero,d:o.dataApuracao||"",n:o.listaDezenas.map(Number).sort((a,b)=>a-b)});add(j);
+  const have=new Set(S.base.map(r=>r.c));let got=1;for(let c=j.numero-1;c>=1&&got<40;c--){if(have.has(c))continue;try{add(await(await fetch(url+c)).json());got++}catch(e){break}}
+  doImport(rows.map(r=>[r.c,r.d,...r.n].join(";")).join("\n"),"API Caixa");m.innerHTML=`<span class="ok">Carregado.</span> Toque de novo para buscar mais (40 por vez).`}
+ catch(e){m.innerHTML=`<span class="bad">O navegador bloqueou o acesso à Caixa.</span> Baixe a planilha de resultados no site da Caixa, exporte como CSV e use a opção 2.`}};
+$("btnExport").onclick=()=>download("megalab04_backup.json",JSON.stringify(Object.assign({versao:VERSAO,exportado:new Date().toISOString()},S)),"application/json");
+$("btnCsvOut").onclick=()=>download("megalab04_base.csv",S.base.map(r=>[r.c,r.d,...r.n].join(";")).join("\n"),"text/csv");
+$("btnRestore").onclick=()=>{try{const j=JSON.parse($("bkText").value);if(!Array.isArray(j.base))throw 0;S={base:j.base,studies:j.studies||[],rounds:j.rounds||[],marks:j.marks||[],log:j.log||[]};S.log.unshift(new Date().toISOString().slice(0,16)+" · backup restaurado");save();render();$("bkMsg").innerHTML='<span class="ok">Backup restaurado.</span>'}catch(e){$("bkMsg").innerHTML='<span class="bad">JSON inválido.</span>'}};
+/* regimes */
+$("btnReg").onclick=()=>{const c=+$("rC").value,d=$("rDesc").value.trim();if(!c||!d){$("regOut").innerHTML='<p class="bad">Informe o concurso e a descrição com fonte.</p>';return}
+ S.marks.push({c,d,cat:$("rCat").value,quando:new Date().toISOString()});S.marks.sort((a,b)=>a.c-b.c);save();renderMarks()};
+function renderMarks(){$("regList").innerHTML=S.marks.length?"<h3>Marcos</h3>"+S.marks.map((m,i)=>`<p>${m.c} · ${esc(m.cat)} · ${esc(m.d)} <button class="b s" data-m="${i}">Comparar</button></p>`).join(""):'<p class="mut">Nenhum marco registrado.</p>'}
+$("regList").onclick=e=>{const i=e.target.dataset.m;if(i==null)return;const m=S.marks[+i],r=regimeCompare(S.base,m.c);
+ $("regOut").innerHTML=!r?'<p class="warn">Preciso de pelo menos 30 concursos antes e 30 depois do marco.</p>':`<h3>Antes × depois do concurso ${m.c}</h3><p>${r.antes} concursos antes · ${r.depois} depois<br>Soma média: ${r.somaA.toFixed(1)} × ${r.somaB.toFixed(1)} (teoria 183)<br>Frequências das 60 dezenas: qui-quadrado ${r.chi.toFixed(1)}, 59 g.l., p ≈ ${r.p.toFixed(3)}</p><p class="${r.p<0.01?"warn":"ok"}">${r.p<0.01?"Os períodos diferem mais do que o acaso costuma produzir. Isso abre investigação (qualidade da base, regras, volume), não prova interferência.":"Os dois períodos são compatíveis com o mesmo sorteio uniforme."}</p>`};
+/* hipóteses */
+$("btnHip").onclick=()=>{if(need("hipOut"))return;const hyp=$("hSel").value,win=+$("hWin").value||100,N=+$("hN").value||300,h=baseHash(S.base);
+ const prior=S.studies.filter(s=>s.hash===h).length;const r=experiment(S.base,hyp,win,N,prior);
+ const same=S.studies.find(s=>s.hyp===hyp&&s.win===win&&s.decision==="CANDIDATO"&&s.ultimo<S.base[S.base.length-1].c);
+ if(same&&r.decision==="CANDIDATO")r.decision="REPLICADO";
+ S.studies.unshift({id:"E"+(S.studies.length+1),quando:new Date().toISOString(),hyp,hip:$("hSel").selectedOptions[0].text,win,versao:VERSAO,hash:h,base:S.base.length,ultimo:S.base[S.base.length-1].c,...r});save();renderCatalog();
+ const cls={CANDIDATO:"warn",REPLICADO:"ok",REFUTADO:"bad",INCONCLUSIVO:"warn"}[r.decision];
+ $("hipOut").innerHTML=`<p class="${cls}"><b>${r.decision}</b></p>`+(r.N?`<p>Testados ${r.N} concursos · método ${r.mm.toFixed(3)} acertos · aleatório ${r.mr.toFixed(3)} · teoria 0,600<br>z = ${r.z.toFixed(2)} · limite ${r.zc.toFixed(2)} (estudo nº ${prior+1} nesta base)</p>`:"")+`<p class="mut">${r.reason}</p>`};
+function renderCatalog(){$("catalog").innerHTML=S.studies.length?"<table><tr><th>Estudo</th><th>Resultado</th></tr>"+S.studies.slice(0,60).map(s=>`<tr><td>${s.id||""} · ${s.quando.slice(0,10)} · ${esc(s.hip)} · janela ${s.win} · ${s.N||0} testes${s.mm!=null?" · "+s.mm.toFixed(3)+" × "+s.mr.toFixed(3):""} · base ${s.hash||"?"}</td><td>${s.decision}</td></tr>`).join("")+"</table>":'<p class="mut">Nenhum estudo ainda.</p>'}
+/* gerador */
+$("btnGen").onclick=()=>{const fx=parseNums($("gFix").value).slice(0,6),ex=parseNums($("gExc").value).filter(x=>!fx.includes(x));
+ const res=generate(rng(Date.now()),{qt:Math.min(20,Math.max(1,+$("gQt").value||1)),mode:$("gMode").value,maxOv:+$("gOv").value||0,fixed:fx,exc:ex,common:$("gCommon").checked});
+ $("genOut").innerHTML=res.cards.map(g=>{const pr=g.filter(x=>x%2===0).length;return`<p>${balls(g)}<br><span class="mut">${pr} pares · quadrantes ${pattern(g,"Q4")} · soma ${g.reduce((a,b)=>a+b,0)}</span></p>`}).join("")+
+ `<p class="mut">Relatório: modo ${$("gMode").value} · fixas ${fx.join(" ")||"nenhuma"} · excluídas ${ex.join(" ")||"nenhuma"} · descartadas por padrão popular ${res.disc.popular} · por sobreposição ${res.disc.sobreposicao}${res.cards.length<+$("gQt").value?" · <span class='warn'>não consegui todas: afrouxe a sobreposição</span>":""}<br>Cada cartela: 1 em 50.063.860 para a sena. Os filtros não mudam isso.</p>`};
+/* jogão */
+$("btnJog").onclick=()=>{const k=+$("jMode").value,mine=parseNums($("jMine").value),t=+$("jTarget").value,msg=$("jMsg"),meth=$("jIA").value;
+ if(mine.length!==k){msg.innerHTML=`<span class="bad">Escolha exatamente ${k} dezenas.</span>`;return}
+ if(!t){msg.innerHTML='<span class="bad">Informe o concurso alvo.</span>';return}
+ if(S.base.some(r=>r.c===t)){msg.innerHTML='<span class="bad">Esse concurso já está na base. A rodada tem que ser registrada antes do sorteio.</span>';return}
+ const r=rng(Date.now()^t);const B=S.base.length>=100?S.base:null;const pick=(n,ex)=>B?iaPick(B,meth,n,ex,r):pickRandom(r,n,[],ex).slice(0,n);
+ const part=pick(6-k,mine).slice(0,6-k);const mix=mine.concat(part).sort((a,b)=>a-b);const ia=pick(6,[]).sort((a,b)=>a-b);
+ S.rounds.unshift({quando:new Date().toISOString(),alvo:t,modo:k===2?"2+4":"4+2",metodo:meth+(B?"":" (base < 100: aleatório)"),humano:mine,iaParte:part,misto:mix,ia,res:null});save();renderScore();
+ msg.innerHTML=`Registrada para o concurso ${t} às ${new Date().toLocaleTimeString("pt-BR")}.<br>Aposta conjunta: ${balls(mix)}<br>Aposta só da IA: ${balls(ia)}`};
+function checkRounds(){let ch=false;S.rounds.forEach(rd=>{if(rd.res)return;const c=S.base.find(r=>r.c===rd.alvo);if(c){rd.res={sorteio:c.n,humano:hits(rd.humano,c.n),iaParte:hits(rd.iaParte||[],c.n),misto:hits(rd.misto,c.n),ia:hits(rd.ia,c.n)};ch=true}});if(ch)save()}
+function renderScore(){const done=S.rounds.filter(r=>r.res);let h=0,i=0,ip=0;done.forEach(r=>{h+=r.res.humano;i+=r.res.ia;ip+=r.res.iaParte||0});
+ $("jScore").innerHTML=(done.length?`<p>${done.length} rodadas conferidas · suas dezenas acertaram <b>${h}</b> · a parte da IA na conjunta <b>${ip}</b> · a aposta só da IA <b>${i}</b></p><p class="mut">Placar passado não prevê o próximo.</p>`:'<p class="mut">Nenhuma rodada conferida ainda.</p>')+
+ (S.rounds.length?"<table><tr><th>Concurso · modo</th><th>Você</th><th>Conjunta</th><th>IA</th></tr>"+S.rounds.slice(0,30).map(r=>`<tr><td>${r.alvo} · ${r.modo}</td><td>${r.res?r.res.humano:"…"}</td><td>${r.res?r.res.misto:"…"}</td><td>${r.res?r.res.ia:"…"}</td></tr>`).join("")+"</table>":"")}
+$("btnSim").onclick=()=>{const s=simulateIA(S.base,$("jIA").value);$("simOut").innerHTML=`<p>Aposta da IA: ${balls(s.ia)}<br>Média de acertos em 10.000 sorteios: <b>${s.mean.toFixed(3)}</b> (teoria 0,600)</p>`};
+/* educação */
+$("btnFal").onclick=()=>{if(need("falOut"))return;const K=Math.max(1,+$("eK").value||20),r=lateFallacy(S.base,K);
+ $("falOut").innerHTML=r.cases?`<p>${r.cases} situações em que uma dezena estava atrasada há ${K}+ concursos. Ela saiu no concurso seguinte em <b>${pct(r.rate)}</b> das vezes (acaso: 10%).</p><p class="mut">Se ficar perto de 10%, o atraso não "puxa" a dezena.</p>`:'<p class="mut">Nenhum caso com esse atraso.</p>'};
+load();show(S.base.length?"cards":"base");render();
+}
+</script>
+</body>
+</html>
