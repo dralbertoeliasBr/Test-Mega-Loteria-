@@ -1,0 +1,23 @@
+MEGA-SENA · estatística dos sorteios já realizados
+Concursos 1 a 3090 (11/03/1996 a 24/11/2026) · esperado por dezena: 309
+
+TODAS AS 60 (vezes · atraso)
+01: 301× atr 23 · 02: 309× atr 13 · 03: 284× atr 4 · 04: 327× atr 8 · 05: 337× atr 11
+06: 317× atr 3 · 07: 289× atr 12 · 08: 303× atr 25 · 09: 296× atr 11 · 10: 365× atr 0
+11: 325× atr 28 · 12: 285× atr 12 · 13: 316× atr 10 · 14: 306× atr 0 · 15: 276× atr 30
+16: 321× atr 8 · 17: 330× atr 1 · 18: 295× atr 1 · 19: 297× atr 20 · 20: 299× atr 4
+21: 262× atr 2 · 22: 279× atr 6 · 23: 325× atr 3 · 24: 310× atr 2 · 25: 305× atr 3
+26: 250× atr 43 · 27: 334× atr 0 · 28: 319× atr 0 · 29: 305× atr 5 · 30: 329× atr 6
+31: 287× atr 6 · 32: 326× atr 14 · 33: 329× atr 23 · 34: 325× atr 2 · 35: 326× atr 4
+36: 315× atr 1 · 37: 334× atr 5 · 38: 331× atr 4 · 39: 297× atr 5 · 40: 295× atr 11
+41: 316× atr 11 · 42: 327× atr 9 · 43: 328× atr 4 · 44: 324× atr 2 · 45: 300× atr 19
+46: 321× atr 4 · 47: 295× atr 0 · 48: 290× atr 3 · 49: 312× atr 14 · 50: 301× atr 3
+51: 310× atr 19 · 52: 309× atr 19 · 53: 350× atr 25 · 54: 319× atr 7 · 55: 265× atr 15
+56: 320× atr 32 · 57: 295× atr 0 · 58: 303× atr 1 · 59: 296× atr 1 · 60: 298× atr 20
+
+COLUNAS (final 1..0): C1: 1801 | C2: 1835 | C3: 1932 | C4: 1911 | C5: 1809 | C6: 1844 | C7: 1877 | C8: 1841 | C9: 1803 | C10: 1887
+LINHAS: 01-10: 3128 | 11-20: 3050 | 21-30: 3018 | 31-40: 3165 | 41-50: 3114 | 51-60: 3065
+QUADRANTES (Q1 = 01-30 finais 1-5 · Q2 = 01-30 finais 6-0 · Q3 = 31-60 finais 1-5 · Q4 = 31-60 finais 6-0): Q1: 4547 | Q2: 4649 | Q3: 4741 | Q4: 4603
+PARES: 9318 · ÍMPARES: 9222
+
+Tudo dentro do que o acaso produz (testado no MEGA LAB).
